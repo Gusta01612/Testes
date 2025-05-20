@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel de Coletas</title>
+  <title>Painel de Solicitações</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f2f2f2;
+      margin: 0;
       padding: 20px;
     }
     h1 {
@@ -22,21 +23,16 @@
       text-decoration: none;
       color: #007bff;
     }
-    .section-title {
-      margin-top: 40px;
-      font-size: 1.5em;
-      color: #333;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
       background-color: #fff;
-      margin-top: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
     th, td {
-      padding: 8px;
       border: 1px solid #ccc;
+      padding: 10px;
       text-align: left;
     }
     th {
@@ -44,75 +40,74 @@
       color: white;
     }
     select {
-      padding: 4px;
+      padding: 5px;
     }
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {
         display: block;
       }
-      th {
-        position: absolute;
-        left: -9999px;
+      thead tr {
+        display: none;
       }
       td {
-        border: none;
         position: relative;
         padding-left: 50%;
-        margin-bottom: 10px;
+        border: none;
+        border-bottom: 1px solid #ccc;
       }
       td::before {
         position: absolute;
-        left: 10px;
         top: 10px;
+        left: 10px;
+        width: 45%;
         white-space: nowrap;
         font-weight: bold;
       }
+      td:nth-of-type(1)::before { content: "Nota Fiscal"; }
+      td:nth-of-type(2)::before { content: "Valor"; }
+      td:nth-of-type(3)::before { content: "Volumes"; }
+      td:nth-of-type(4)::before { content: "Peso"; }
+      td:nth-of-type(5)::before { content: "Data Coleta"; }
+      td:nth-of-type(6)::before { content: "Endereço Coleta"; }
+      td:nth-of-type(7)::before { content: "Destino"; }
+      td:nth-of-type(8)::before { content: "Solicitante"; }
+      td:nth-of-type(9)::before { content: "Status"; }
+      td:nth-of-type(10)::before { content: "Ações"; }
     }
   </style>
 </head>
 <body>
   <nav>
-    <a href="index.html">Cadastro</a> |
-    <a href="listar.html">Listar</a> |
-    <a href="config.html">Configurações</a> |
+    <a href="index.html">Cadastro</a> | 
+    <a href="listar.html">Listar</a> | 
+    <a href="config.html">Configurações</a> | 
     <a href="solicitar_coleta.html">Solicitar Coleta</a> |
-    <a href="painel.html">Painel</a>
+    <a href="painel.html">Painel</a> |
+    <a href="finalizadas.html">Finalizadas</a>
   </nav>
 
-  <h1>Painel de Coletas</h1>
-
-  <div class="section-title">Coletas em andamento</div>
+  <h1>Solicitações de Coleta</h1>
   <table>
     <thead>
       <tr>
         <th>Nota Fiscal</th>
-        <th>Data</th>
-        <th>Origem</th>
+        <th>Valor</th>
+        <th>Volumes</th>
+        <th>Peso</th>
+        <th>Data Coleta</th>
+        <th>Endereço Coleta</th>
         <th>Destino</th>
+        <th>Solicitante</th>
         <th>Status</th>
-        <th>Atualizar</th>
+        <th>Ações</th>
       </tr>
     </thead>
-    <tbody id="tabela-andamento"></tbody>
-  </table>
-
-  <div class="section-title">Coletas finalizadas</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Nota Fiscal</th>
-        <th>Data</th>
-        <th>Origem</th>
-        <th>Destino</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-finalizadas"></tbody>
+    <tbody id="tabela-solicitacoes"></tbody>
   </table>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js';
+    import { getFirestore, collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
@@ -125,61 +120,52 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const solicitacoesRef = collection(db, 'solicitacoes');
 
-    const andamento = document.getElementById('tabela-andamento');
-    const finalizadas = document.getElementById('tabela-finalizadas');
+    const tbody = document.getElementById('tabela-solicitacoes');
 
-    function renderTabela(data) {
-      andamento.innerHTML = '';
-      finalizadas.innerHTML = '';
-
-      data.forEach(docSnap => {
-        const dados = docSnap.data();
-        const id = docSnap.id;
-        const tr = document.createElement('tr');
-        const conteudo = `
-          <td>${dados.nota_fiscal || '-'}</td>
-          <td>${dados.data_coleta || '-'}</td>
-          <td>${dados.endereco_coleta || '-'}</td>
-          <td>${dados.endereco_destino || '-'}</td>
-        `;
-
-        if (dados.status === 'Entregue') {
-          tr.innerHTML = conteudo + `<td>${dados.status}</td>`;
-          finalizadas.appendChild(tr);
-        } else {
-          const select = document.createElement('select');
-          const statusList = ['A coletar', 'Coletado', 'Transferência', 'Rota de entrega', 'Entregue'];
-          statusList.forEach(status => {
-            const option = document.createElement('option');
-            option.value = status;
-            option.textContent = status;
-            if (status === dados.status) option.selected = true;
-            select.appendChild(option);
-          });
-
-          select.addEventListener('change', async () => {
-            await updateDoc(doc(db, 'solicitacoes', id), { status: select.value });
-          });
-
-          const tdStatus = document.createElement('td');
-          tdStatus.textContent = dados.status;
-
-          const tdSelect = document.createElement('td');
-          tdSelect.appendChild(select);
-
-          tr.innerHTML = conteudo;
-          tr.appendChild(tdStatus);
-          tr.appendChild(tdSelect);
-          andamento.appendChild(tr);
+    async function carregarSolicitacoes() {
+      const querySnapshot = await getDocs(collection(db, "solicitacoes"));
+      tbody.innerHTML = '';
+      querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.status !== 'Entregue') {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${data.nota_fiscal}</td>
+            <td>R$ ${parseFloat(data.valor_nota).toFixed(2)}</td>
+            <td>${data.quantidade_volume}</td>
+            <td>${data.peso} kg</td>
+            <td>${data.data_coleta}</td>
+            <td>${data.endereco_coleta}</td>
+            <td>${data.endereco_destino}</td>
+            <td>${data.solicitante || '-'}</td>
+            <td>
+              <select onchange="atualizarStatus('${docSnap.id}', this.value)">
+                <option value="A coletar" ${data.status === 'A coletar' ? 'selected' : ''}>A coletar</option>
+                <option value="Coletado" ${data.status === 'Coletado' ? 'selected' : ''}>Coletado</option>
+                <option value="Transferência" ${data.status === 'Transferência' ? 'selected' : ''}>Transferência</option>
+                <option value="Rota de entrega" ${data.status === 'Rota de entrega' ? 'selected' : ''}>Rota de entrega</option>
+                <option value="Entregue" ${data.status === 'Entregue' ? 'selected' : ''}>Entregue</option>
+              </select>
+            </td>
+            <td>-</td>
+          `;
+          tbody.appendChild(tr);
         }
       });
     }
 
-    onSnapshot(solicitacoesRef, snapshot => {
-      renderTabela(snapshot.docs);
-    });
+    window.atualizarStatus = async (id, novoStatus) => {
+      const ref = doc(db, "solicitacoes", id);
+      await updateDoc(ref, { status: novoStatus });
+      if (novoStatus === 'Entregue') {
+        location.reload();
+      } else {
+        carregarSolicitacoes();
+      }
+    }
+
+    carregarSolicitacoes();
   </script>
 </body>
 </html>
