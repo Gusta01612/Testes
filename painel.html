@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Solicitações</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Solicitações de Coleta</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nota Fiscal</th>
+        <th>Valor</th>
+        <th>Volumes</th>
+        <th>Peso</th>
+        <th>Data Coleta</th>
+        <th>Coleta</th>
+        <th>Destino</th>
+        <th>Solicitante</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-solicitacoes"></tbody>
+  </table>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
+      authDomain: "formulario-coleta.firebaseapp.com",
+      projectId: "formulario-coleta",
+      storageBucket: "formulario-coleta.firebasestorage.app",
+      messagingSenderId: "613221864969",
+      appId: "1:613221864969:web:a0384c29ee005da6468ad8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tbody = document.getElementById("tabela-solicitacoes");
+
+    onSnapshot(collection(db, "solicitacoes"), (snapshot) => {
+      tbody.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const s = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${s.nota_fiscal}</td>
+          <td>R$ ${s.valor_nota?.toFixed(2)}</td>
+          <td>${s.quantidade_volume}</td>
+          <td>${s.peso} kg</td>
+          <td>${s.data_coleta}</td>
+          <td>${s.endereco_coleta}</td>
+          <td>${s.endereco_destino}</td>
+          <td>${s.solicitante || "-"}</td>
+          <td>${s.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
