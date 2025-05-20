@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solicitações Finalizadas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #28a745;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Solicitar Coleta</a> |
+    <a href="painel.html">Painel</a> |
+    <a href="finalizadas.html">Finalizadas</a>
+  </nav>
+
+  <h1>Solicitações Finalizadas</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nota Fiscal</th>
+        <th>Valor</th>
+        <th>Volumes</th>
+        <th>Peso</th>
+        <th>Data Coleta</th>
+        <th>Endereço Coleta</th>
+        <th>Destino</th>
+        <th>Solicitante</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-finalizadas"></tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
+      authDomain: "formulario-coleta.firebaseapp.com",
+      projectId: "formulario-coleta",
+      storageBucket: "formulario-coleta.appspot.com",
+      messagingSenderId: "613221864969",
+      appId: "1:613221864969:web:a0384c29ee005da6468ad8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const tabela = document.getElementById('tabela-finalizadas');
+
+    async function carregarFinalizadas() {
+      const querySnapshot = await getDocs(collection(db, "solicitacoes"));
+      tabela.innerHTML = "";
+
+      querySnapshot.forEach((doc) => {
+        const dados = doc.data();
+        if (dados.status === "Entregue") {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${dados.nota_fiscal}</td>
+            <td>R$ ${parseFloat(dados.valor_nota).toFixed(2)}</td>
+            <td>${dados.quantidade_volume}</td>
+            <td>${dados.peso} kg</td>
+            <td>${dados.data_coleta}</td>
+            <td>${dados.endereco_coleta}</td>
+            <td>${dados.endereco_destino}</td>
+            <td>${dados.solicitante || "-"}</td>
+            <td>${dados.status}</td>
+          `;
+          tabela.appendChild(tr);
+        }
+      });
+    }
+
+    carregarFinalizadas();
+  </script>
+</body>
+</html>
