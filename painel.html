@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel de Solicitações - Pendentes</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Coletas</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
+      background-color: #f9f9f9;
       padding: 20px;
-      margin: 0;
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
     }
     nav {
       text-align: center;
@@ -23,144 +21,165 @@
       margin: 0 10px;
       text-decoration: none;
       color: #007bff;
-      font-weight: bold;
+    }
+    .section-title {
+      margin-top: 40px;
+      font-size: 1.5em;
+      color: #333;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      background-color: #fff;
+      margin-top: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     th, td {
+      padding: 8px;
       border: 1px solid #ccc;
-      padding: 8px 10px;
       text-align: left;
     }
     th {
       background-color: #007bff;
       color: white;
     }
-    button {
-      padding: 5px 10px;
-      background-color: green;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    select {
+      padding: 4px;
     }
-    button:hover {
-      background-color: darkgreen;
-    }
-
-    /* Responsivo básico */
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {
         display: block;
       }
-      thead tr {
-        display: none;
-      }
-      tr {
-        margin-bottom: 15px;
-        background: #fff;
-        padding: 10px;
-        border-radius: 6px;
+      th {
+        position: absolute;
+        left: -9999px;
       }
       td {
-        padding: 8px 10px;
-        text-align: right;
+        border: none;
         position: relative;
         padding-left: 50%;
-        border: none;
-        border-bottom: 1px solid #ddd;
+        margin-bottom: 10px;
       }
       td::before {
-        content: attr(data-label);
         position: absolute;
         left: 10px;
-        width: 45%;
-        padding-left: 10px;
+        top: 10px;
+        white-space: nowrap;
         font-weight: bold;
-        text-align: left;
-      }
-      button {
-        width: 100%;
-        margin-top: 10px;
       }
     }
   </style>
 </head>
 <body>
   <nav>
-    <a href="painel.html">Pendentes</a> | 
-    <a href="finalizados.html">Finalizados</a>
+    <a href="index.html">Cadastro</a> |
+    <a href="listar.html">Listar</a> |
+    <a href="config.html">Configurações</a> |
+    <a href="solicitar_coleta.html">Solicitar Coleta</a> |
+    <a href="painel.html">Painel</a>
   </nav>
-  <h1>Solicitações Pendentes</h1>
+
+  <h1>Painel de Coletas</h1>
+
+  <div class="section-title">Coletas em andamento</div>
   <table>
     <thead>
       <tr>
         <th>Nota Fiscal</th>
-        <th>Valor</th>
-        <th>Volumes</th>
-        <th>Peso</th>
-        <th>Data Coleta</th>
-        <th>Endereço Coleta</th>
+        <th>Data</th>
+        <th>Origem</th>
         <th>Destino</th>
-        <th>Solicitante</th>
         <th>Status</th>
-        <th>Ações</th>
+        <th>Atualizar</th>
       </tr>
     </thead>
-    <tbody id="tabela-solicitacoes"></tbody>
+    <tbody id="tabela-andamento"></tbody>
   </table>
 
-  <script>
-    const tbody = document.getElementById('tabela-solicitacoes');
+  <div class="section-title">Coletas finalizadas</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Nota Fiscal</th>
+        <th>Data</th>
+        <th>Origem</th>
+        <th>Destino</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-finalizadas"></tbody>
+  </table>
 
-    function carregarSolicitacoes() {
-      const solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
-      // Filtra só as pendentes (status diferente de Atendido)
-      const pendentes = solicitacoes.filter(s => s.status !== 'Atendido');
-      tbody.innerHTML = '';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
 
-      if (pendentes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma solicitação pendente.</td></tr>';
-        return;
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
+      authDomain: "formulario-coleta.firebaseapp.com",
+      projectId: "formulario-coleta",
+      storageBucket: "formulario-coleta.appspot.com",
+      messagingSenderId: "613221864969",
+      appId: "1:613221864969:web:a0384c29ee005da6468ad8"
+    };
 
-      pendentes.forEach((sol, i) => {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const solicitacoesRef = collection(db, 'solicitacoes');
+
+    const andamento = document.getElementById('tabela-andamento');
+    const finalizadas = document.getElementById('tabela-finalizadas');
+
+    function renderTabela(data) {
+      andamento.innerHTML = '';
+      finalizadas.innerHTML = '';
+
+      data.forEach(docSnap => {
+        const dados = docSnap.data();
+        const id = docSnap.id;
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td data-label="Nota Fiscal">${sol.nota_fiscal}</td>
-          <td data-label="Valor">R$ ${sol.valor_nota.toFixed(2)}</td>
-          <td data-label="Volumes">${sol.quantidade_volume}</td>
-          <td data-label="Peso">${sol.peso} kg</td>
-          <td data-label="Data Coleta">${sol.data_coleta}</td>
-          <td data-label="Endereço Coleta">${sol.endereco_coleta}</td>
-          <td data-label="Destino">${sol.endereco_destino}</td>
-          <td data-label="Solicitante">${sol.solicitante || '-'}</td>
-          <td data-label="Status">${sol.status}</td>
-          <td data-label="Ações">
-            <button onclick="marcarComoAtendido('${sol.nota_fiscal}')">Atender</button>
-          </td>
+        const conteudo = `
+          <td>${dados.nota_fiscal || '-'}</td>
+          <td>${dados.data_coleta || '-'}</td>
+          <td>${dados.endereco_coleta || '-'}</td>
+          <td>${dados.endereco_destino || '-'}</td>
         `;
-        tbody.appendChild(tr);
-      });
-    }
 
-    function marcarComoAtendido(notaFiscal) {
-      let solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
-      solicitacoes = solicitacoes.map(s => {
-        if (s.nota_fiscal === notaFiscal) {
-          s.status = 'Atendido';
+        if (dados.status === 'Entregue') {
+          tr.innerHTML = conteudo + `<td>${dados.status}</td>`;
+          finalizadas.appendChild(tr);
+        } else {
+          const select = document.createElement('select');
+          const statusList = ['A coletar', 'Coletado', 'Transferência', 'Rota de entrega', 'Entregue'];
+          statusList.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status;
+            option.textContent = status;
+            if (status === dados.status) option.selected = true;
+            select.appendChild(option);
+          });
+
+          select.addEventListener('change', async () => {
+            await updateDoc(doc(db, 'solicitacoes', id), { status: select.value });
+          });
+
+          const tdStatus = document.createElement('td');
+          tdStatus.textContent = dados.status;
+
+          const tdSelect = document.createElement('td');
+          tdSelect.appendChild(select);
+
+          tr.innerHTML = conteudo;
+          tr.appendChild(tdStatus);
+          tr.appendChild(tdSelect);
+          andamento.appendChild(tr);
         }
-        return s;
       });
-      localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
-      carregarSolicitacoes();
     }
 
-    carregarSolicitacoes();
+    onSnapshot(solicitacoesRef, snapshot => {
+      renderTabela(snapshot.docs);
+    });
   </script>
 </body>
 </html>
