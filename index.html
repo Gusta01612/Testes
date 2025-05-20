@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Solicitação de Coleta</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background-color: #f9f9f9;
       padding: 20px;
+      margin: 0;
     }
     .container {
       max-width: 600px;
@@ -20,10 +21,12 @@
     }
     h2 {
       text-align: center;
+      margin-bottom: 20px;
     }
     label {
-      margin-top: 15px;
       display: block;
+      margin-top: 15px;
+      font-weight: 600;
     }
     input, textarea {
       width: 100%;
@@ -31,17 +34,21 @@
       margin-top: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 1rem;
+      resize: vertical;
     }
     button {
       margin-top: 20px;
       width: 100%;
-      padding: 12px;
+      padding: 15px;
       background-color: #007bff;
       color: white;
-      font-size: 16px;
+      font-size: 18px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     button:hover {
       background-color: #0056b3;
@@ -50,6 +57,26 @@
       color: green;
       text-align: center;
       margin-top: 15px;
+      font-weight: 600;
+    }
+
+    /* RESPONSIVO */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: none;
+      }
+      input, textarea {
+        font-size: 1rem;
+      }
+      button {
+        font-size: 16px;
+        padding: 12px;
+      }
     }
   </style>
 </head>
@@ -58,58 +85,42 @@
     <h2>Solicitação de Coleta</h2>
     <form id="form-solicitacao">
       <label for="nota_fiscal">Nota Fiscal:</label>
-      <input type="text" id="nota_fiscal" required>
+      <input type="text" id="nota_fiscal" required />
 
       <label for="valor_nota">Valor da Nota (R$):</label>
-      <input type="number" step="0.01" id="valor_nota" required>
+      <input type="number" step="0.01" id="valor_nota" required />
 
       <label for="quantidade_volume">Quantidade de Volumes:</label>
-      <input type="number" id="quantidade_volume" required>
+      <input type="number" id="quantidade_volume" required />
 
       <label for="peso">Peso Total (kg):</label>
-      <input type="number" step="0.01" id="peso" required>
+      <input type="number" step="0.01" id="peso" required />
 
       <label for="data_coleta">Data Desejada para Coleta:</label>
-      <input type="date" id="data_coleta" required>
+      <input type="date" id="data_coleta" required />
 
       <label for="endereco_coleta">Endereço de Coleta:</label>
-      <textarea id="endereco_coleta" required></textarea>
+      <textarea id="endereco_coleta" rows="3" required></textarea>
 
       <label for="endereco_destino">Endereço de Destino:</label>
-      <textarea id="endereco_destino" required></textarea>
+      <textarea id="endereco_destino" rows="3" required></textarea>
 
       <label for="solicitante">Nome do Solicitante (opcional):</label>
-      <input type="text" id="solicitante">
+      <input type="text" id="solicitante" />
 
       <label for="observacoes">Observações:</label>
-      <textarea id="observacoes"></textarea>
+      <textarea id="observacoes" rows="3"></textarea>
 
       <button type="submit">Enviar Solicitação</button>
     </form>
     <p class="success" id="mensagem-sucesso"></p>
   </div>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
-      authDomain: "formulario-coleta.firebaseapp.com",
-      projectId: "formulario-coleta",
-      storageBucket: "formulario-coleta.firebasestorage.app",
-      messagingSenderId: "613221864969",
-      appId: "1:613221864969:web:a0384c29ee005da6468ad8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+  <script>
     const form = document.getElementById('form-solicitacao');
     const mensagem = document.getElementById('mensagem-sucesso');
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', function(e) {
       e.preventDefault();
 
       const solicitacao = {
@@ -122,18 +133,17 @@
         endereco_destino: document.getElementById('endereco_destino').value,
         solicitante: document.getElementById('solicitante').value,
         observacoes: document.getElementById('observacoes').value,
-        status: 'Solicitado',
-        criado_em: new Date().toISOString()
+        status: 'Solicitado'
       };
 
-      try {
-        await addDoc(collection(db, "solicitacoes"), solicitacao);
-        mensagem.textContent = "Solicitação enviada com sucesso!";
-        form.reset();
-        setTimeout(() => mensagem.textContent = '', 3000);
-      } catch (err) {
-        alert("Erro ao enviar solicitação: " + err.message);
-      }
+      const solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
+      solicitacoes.push(solicitacao);
+      localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+
+      mensagem.textContent = "Solicitação enviada com sucesso!";
+      form.reset();
+
+      setTimeout(() => mensagem.textContent = '', 3000);
     });
   </script>
 </body>
