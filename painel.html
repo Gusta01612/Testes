@@ -3,73 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel de Solicitações Responsivo</title>
+  <title>Painel de Solicitações - Pendentes</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0; padding: 0; background: #f5f5f5;
-      min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center;
-    }
-    header {
-      background: #007bff;
-      color: white;
-      padding: 15px 20px;
-      width: 100%;
-      box-sizing: border-box;
-      text-align: center;
-      font-size: 1.4rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .container {
-      max-width: 1200px;
-      width: 95%;
-      margin: 20px auto;
-      background: white;
+      background: #f2f2f2;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      word-break: break-word;
-      text-align: center;
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
     }
     th {
-      background: #007bff;
-      color: white;
-    }
-    /* Status colors */
-    .status-Solicitado { color: #d9534f; font-weight: bold; }
-    .status-EmAndamento { color: #f0ad4e; font-weight: bold; }
-    .status-Entregue { color: #5cb85c; font-weight: bold; }
-
-    button {
-      padding: 6px 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-    button.next-status {
       background-color: #007bff;
       color: white;
     }
-    button.next-status:hover {
-      background-color: #0056b3;
+    button {
+      padding: 5px 10px;
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkgreen;
     }
 
-    /* Responsivo */
-    @media (max-width: 900px) {
+    /* Responsivo básico */
+    @media (max-width: 600px) {
       table, thead, tbody, th, td, tr {
         display: block;
       }
@@ -78,179 +62,105 @@
       }
       tr {
         margin-bottom: 15px;
-        border-radius: 10px;
-        background: #fafafa;
-        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        background: #fff;
         padding: 10px;
+        border-radius: 6px;
       }
       td {
-        border: none;
-        padding: 10px 10px 10px 40%;
+        padding: 8px 10px;
+        text-align: right;
         position: relative;
-        text-align: left;
-        font-size: 0.9rem;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #ddd;
       }
       td::before {
-        position: absolute;
-        top: 10px; left: 10px;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: bold;
         content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-left: 10px;
+        font-weight: bold;
+        text-align: left;
       }
-      button.next-status {
+      button {
         width: 100%;
         margin-top: 10px;
       }
     }
-
-    /* Notificação visual */
-    #notificacao {
-      margin-bottom: 10px;
-      font-weight: bold;
-      color: #d9534f;
-    }
   </style>
 </head>
 <body>
-  <header>
-    Painel de Solicitações - Controle de Status
-  </header>
+  <nav>
+    <a href="painel.html">Pendentes</a> | 
+    <a href="finalizados.html">Finalizados</a>
+  </nav>
+  <h1>Solicitações Pendentes</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Nota Fiscal</th>
+        <th>Valor</th>
+        <th>Volumes</th>
+        <th>Peso</th>
+        <th>Data Coleta</th>
+        <th>Endereço Coleta</th>
+        <th>Destino</th>
+        <th>Solicitante</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-solicitacoes"></tbody>
+  </table>
 
-  <div class="container">
-    <div id="notificacao"></div>
-    <table>
-      <thead>
-        <tr>
-          <th>Nota Fiscal</th>
-          <th>Valor (R$)</th>
-          <th>Volumes</th>
-          <th>Peso (kg)</th>
-          <th>Data Coleta</th>
-          <th>Endereço Coleta</th>
-          <th>Destino</th>
-          <th>Solicitante</th>
-          <th>Status</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-solicitacoes"></tbody>
-    </table>
-  </div>
+  <script>
+    const tbody = document.getElementById('tabela-solicitacoes');
 
-  <!-- Firebase SDKs e código JS -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      onSnapshot,
-      updateDoc,
-      doc,
-      query,
-      orderBy
-    } from "https://www.gstatic.com/firebasejs/11.8.0/firebase-firestore.js";
+    function carregarSolicitacoes() {
+      const solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
+      // Filtra só as pendentes (status diferente de Atendido)
+      const pendentes = solicitacoes.filter(s => s.status !== 'Atendido');
+      tbody.innerHTML = '';
 
-    // Config Firebase (substitua pelo seu)
-    const firebaseConfig = {
-      apiKey: "AIzaSyChRj15DTSVF9OMNFcQKF9rqsNappqN1z8",
-      authDomain: "formulario-coleta.firebaseapp.com",
-      projectId: "formulario-coleta",
-      storageBucket: "formulario-coleta.firebasestorage.app",
-      messagingSenderId: "613221864969",
-      appId: "1:613221864969:web:a0384c29ee005da6468ad8"
-    };
-
-    // Inicializa Firebase e Firestore
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const tabela = document.getElementById("tabela-solicitacoes");
-    const notificacao = document.getElementById("notificacao");
-
-    // Status na ordem para avançar ao próximo
-    const statusOrdem = ["Solicitado", "EmAndamento", "Entregue"];
-
-    // Função para formatar status visual
-    function statusDisplay(status) {
-      if(status === "Solicitado") return "Solicitado";
-      if(status === "EmAndamento") return "Em andamento";
-      if(status === "Entregue") return "Entregue";
-      return status;
-    }
-
-    // Função para obter a próxima posição do status
-    function proximoStatus(atual) {
-      let idx = statusOrdem.indexOf(atual);
-      if(idx === -1 || idx === statusOrdem.length - 1) return null; // Último status
-      return statusOrdem[idx + 1];
-    }
-
-    // Atualiza status no Firestore
-    async function atualizarStatus(id, novoStatus) {
-      try {
-        const docRef = doc(db, "solicitacoes", id);
-        await updateDoc(docRef, { status: novoStatus });
-      } catch (error) {
-        alert("Erro ao atualizar status: " + error.message);
+      if (pendentes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma solicitação pendente.</td></tr>';
+        return;
       }
-    }
 
-    // Renderiza a tabela
-    function renderTabela(docs) {
-      tabela.innerHTML = "";
-      let pendentesCount = 0;
-
-      docs.forEach((doc) => {
-        const data = doc.data();
-        const id = doc.id;
-
-        if(data.status === "Solicitado") pendentesCount++;
-
-        const tr = document.createElement("tr");
-
+      pendentes.forEach((sol, i) => {
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td data-label="Nota Fiscal">${data.nota_fiscal}</td>
-          <td data-label="Valor">R$ ${data.valor_nota.toFixed(2)}</td>
-          <td data-label="Volumes">${data.quantidade_volume}</td>
-          <td data-label="Peso">${data.peso.toFixed(2)}</td>
-          <td data-label="Data Coleta">${data.data_coleta}</td>
-          <td data-label="Endereço Coleta">${data.endereco_coleta}</td>
-          <td data-label="Destino">${data.endereco_destino}</td>
-          <td data-label="Solicitante">${data.solicitante || "-"}</td>
-          <td data-label="Status" class="status-${data.status}">${statusDisplay(data.status)}</td>
-          <td data-label="Ação">
-            ${
-              proximoStatus(data.status)
-                ? `<button class="next-status" data-id="${id}" data-novo-status="${proximoStatus(data.status)}">Avançar para "${statusDisplay(proximoStatus(data.status))}"</button>`
-                : '<span style="color:green; font-weight:bold;">Finalizado</span>'
-            }
+          <td data-label="Nota Fiscal">${sol.nota_fiscal}</td>
+          <td data-label="Valor">R$ ${sol.valor_nota.toFixed(2)}</td>
+          <td data-label="Volumes">${sol.quantidade_volume}</td>
+          <td data-label="Peso">${sol.peso} kg</td>
+          <td data-label="Data Coleta">${sol.data_coleta}</td>
+          <td data-label="Endereço Coleta">${sol.endereco_coleta}</td>
+          <td data-label="Destino">${sol.endereco_destino}</td>
+          <td data-label="Solicitante">${sol.solicitante || '-'}</td>
+          <td data-label="Status">${sol.status}</td>
+          <td data-label="Ações">
+            <button onclick="marcarComoAtendido('${sol.nota_fiscal}')">Atender</button>
           </td>
         `;
-
-        tabela.appendChild(tr);
-      });
-
-      notificacao.textContent = pendentesCount > 0 
-        ? `Você tem ${pendentesCount} solicitação(ões) pendente(s).`
-        : "Nenhuma solicitação pendente.";
-
-      // Adiciona eventos nos botões
-      document.querySelectorAll(".next-status").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-id");
-          const novoStatus = btn.getAttribute("data-novo-status");
-          atualizarStatus(id, novoStatus);
-        });
+        tbody.appendChild(tr);
       });
     }
 
-    // Query e listener em tempo real ordenando por data_coleta (se disponível)
-    const q = query(collection(db, "solicitacoes"), orderBy("data_coleta"));
+    function marcarComoAtendido(notaFiscal) {
+      let solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
+      solicitacoes = solicitacoes.map(s => {
+        if (s.nota_fiscal === notaFiscal) {
+          s.status = 'Atendido';
+        }
+        return s;
+      });
+      localStorage.setItem('solicitacoes', JSON.stringify(solicitacoes));
+      carregarSolicitacoes();
+    }
 
-    onSnapshot(q, (snapshot) => {
-      renderTabela(snapshot.docs);
-    });
+    carregarSolicitacoes();
   </script>
 </body>
 </html>
