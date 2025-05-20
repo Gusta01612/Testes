@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel de Solicitações - Finalizados</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    /* Responsivo básico */
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        display: none;
+      }
+      tr {
+        margin-bottom: 15px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 6px;
+      }
+      td {
+        padding: 8px 10px;
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #ddd;
+      }
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-left: 10px;
+        font-weight: bold;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="painel.html">Pendentes</a> | 
+    <a href="finalizados.html">Finalizados</a>
+  </nav>
+  <h1>Solicitações Finalizadas</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Nota Fiscal</th>
+        <th>Valor</th>
+        <th>Volumes</th>
+        <th>Peso</th>
+        <th>Data Coleta</th>
+        <th>Endereço Coleta</th>
+        <th>Destino</th>
+        <th>Solicitante</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-finalizados"></tbody>
+  </table>
+
+  <script>
+    const tbody = document.getElementById('tabela-finalizados');
+
+    function carregarFinalizados() {
+      const solicitacoes = JSON.parse(localStorage.getItem('solicitacoes') || '[]');
+      const finalizados = solicitacoes.filter(s => s.status === 'Atendido');
+      tbody.innerHTML = '';
+
+      if (finalizados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhuma solicitação finalizada.</td></tr>';
+        return;
+      }
+
+      finalizados.forEach(sol => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td data-label="Nota Fiscal">${sol.nota_fiscal}</td>
+          <td data-label="Valor">R$ ${sol.valor_nota.toFixed(2)}</td>
+          <td data-label="Volumes">${sol.quantidade_volume}</td>
+          <td data-label="Peso">${sol.peso} kg</td>
+          <td data-label="Data Coleta">${sol.data_coleta}</td>
+          <td data-label="Endereço Coleta">${sol.endereco_coleta}</td>
+          <td data-label="Destino">${sol.endereco_destino}</td>
+          <td data-label="Solicitante">${sol.solicitante || '-'}</td>
+          <td data-label="Status">${sol.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    carregarFinalizados();
+  </script>
+</body>
+</html>
